@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ball Catch Arcade</title>
+    <style>
+        body {
+            text-align: center;
+            background-color: #1a1a2e;
+            color: white;
+            font-family: Arial, sans-serif;
+            padding-top: 20px;
+            user-select: none;
+        }
+        h1 { font-size: 36px; color: #4ecca3; margin: 5px 0; }
+        p { font-size: 18px; color: #ccc; margin: 5px 0; }
+        
+        /* The Game Screen Box */
+        #gameCanvas {
+            background-color: #16213e;
+            border: 4px solid #0f3460;
+            border-radius: 10px;
+            cursor: none; /* Hides the normal mouse pointer inside the game */
+            display: block;
+            margin: 20px auto;
+        }
+
+        .shop-container {
+            background-color: #16213e;
+            padding: 15px;
+            display: inline-block;
+            border-radius: 15px;
+            border: 2px solid #0f3460;
+            margin-top: 10px;
+        }
+        .shop-btn {
+            background-color: #222831;
+            color: #4ecca3;
+            border: 2px solid #4ecca3;
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-block;
+            width: 260px;
+        }
+        .shop-btn:hover {
+            background-color: #4ecca3;
+            color: #222831;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Balls Caught: <span id="score">0</span></h1>
+    <p>Move your trackpad/mouse left and right to catch the balls!</p>
+
+    <!-- The actual 2D game screen -->
+    <canvas id="gameCanvas" width="500" height="400"></canvas>
+
+    <div class="shop-container">
+        <h2>🛒 UPGRADE & SKIN SHOP</h2>
+        <!-- Size Upgrade -->
+        <button class="shop-btn" id="size-btn" onclick="buySize()">
+            Bigger Catcher (Cost: 10 Balls)
+        </button>
+        <!-- Skins -->
+        <button class="shop-btn" onclick="buySkin('Silver Glove', 25, '#95a5a6')">
+            Silver Catcher (Cost: 25 Balls)
+        </button>
+        <button class="shop-btn" onclick="buySkin('Gold Glove', 50, '#f1c40f')">
+            Gold Catcher (Cost: 50 Balls)
+        </button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // Game Variables
+        let score = 0;
+        let catcherWidth = 80;
+        let catcherHeight = 15;
+        let catcherX = (canvas.width - catcherWidth) / 2;
+        let catcherColor = "#e94560";
+        let sizeCost = 10;
+
+        // Falling Ball Variables
+        let ballX = Math.random() * canvas.width;
+        let ballY = 0;
+        let ballRadius = 12;
+        let ballSpeed = 4;
+
+        // Track mouse movement to move the catcher horizontally
+        canvas.addEventListener("mousemove", function(e) {
+            const rect = canvas.getBoundingClientRect();
+            catcherX = e.clientX - rect.left - (catcherWidth / 2);
+            
+            // Keep catcher inside the screen walls
+            if (catcherX < 0) catcherX = 0;
+            if (catcherX > canvas.width - catcherWidth) catcherX = canvas.width - catcherWidth;
+        });
+
+        // Main Game Loop (Runs constantly to update frames)
+        function drawGame() {
+            // 1. Clear the screen
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 2. Draw the falling ball
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
+            ctx.fillStyle = "#4ecca3";
+            ctx.fill();
+            ctx.closePath();
+
+            // 3. Draw the catcher basket
+            ctx.fillStyle = catcherColor;
+            ctx.fillRect(catcherX, canvas.height - catcherHeight - 10, catcherWidth, catcherHeight);
+
+            // 4. Move the ball downward
+            ballY += ballSpeed;
+
+            // 5. Collision Detection (Did the catcher catch it?)
+            let catcherTop = canvas.height - catcherHeight - 10;
+            if (ballY + ballRadius >= catcherTop && ballY - ballRadius <= canvas.height) {
+                if (ballX >= catcherX && ballX <= catcherX + catcherWidth) {
+                    score += 1;
+                    document.getElementById("score").innerText = score;
+                    resetBall();
+                }
+            }
+
+            // 6. If ball misses and hits the bottom floor, reset it
+            if (ballY > canvas.width) {
+                resetBall();
+            }
+
+            // Keep looping
+            requestAnimationFrame(drawGame);
+        }
+
+        // Send ball back to top at a random spot
+        function resetBall() {
+            ballY = 0;
+            ballX = Math.random() * canvas.width;
+            ballSpeed = 4 + Math.random() * 3; // Randomizes speed a bit to make it fun!
+        }
+
+        // Shop Option: Bigger Basket Size
+        function buySize() {
+            if (score >= sizeCost) {
+                score -= sizeCost;
+                catcherWidth += 25; // Makes the paddle wider and easier to catch things
+                sizeCost = Math.round(sizeCost * 2);
+                document.getElementById("score").innerText = score;
+                document.getElementById("size-btn").innerText = "Bigger Catcher (Cost: " + sizeCost + " Balls)";
+                alert("📏 Catcher upgraded! It's now wider!");
+            } else {
+                alert("❌ Not enough balls caught yet!");
+            }
+        }
+
+        // Shop Option: Change Catcher Colors
+        function buySkin(name, cost, color) {
+            if (score >= cost) {
+                score -= cost;
+                catcherColor = color;
+                document.getElementById("score").innerText = score;
+                alert("🎨 Equipped: " + name + "!");
+            } else {
+                alert("❌ Not enough balls caught yet!");
+            }
+        }
+
+        // Start the game animation loop
+        drawGame();
+    </script>
+</body>
+</html>
